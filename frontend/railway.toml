@@ -1,0 +1,7 @@
+# Para el frontend
+cat > ~/smartfoodai/frontend/railway.toml << 'EOF'
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+EOF
+
