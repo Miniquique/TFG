@@ -17,20 +17,16 @@ const app = express();
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'celebrated-serenity.railway.internal'],
+  origin: process.env.FRONTEND_URL || 'front-production-f1d2.up.railway.app:80',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Trust proxy para que express-rate-limit funcione bien en Railway
-app.set('trust proxy', 1);
-
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 200,
   message: { error: 'Demasiadas solicitudes, intenta más tarde.' },
-  skip: (req) => req.path === '/api/health', // No limitar health check
 });
 app.use('/api', limiter);
 
@@ -38,12 +34,6 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
-
-// Logging de debug
-app.use((req, res, next) => {
-  console.log(`📨 ${req.method} ${req.path}`);
-  next();
-});
 
 // ── Rutas ──────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
