@@ -1,5 +1,3 @@
-# Para el backend
-cat > ~/smartfoodai/backend/railway.toml << 'EOF'
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
@@ -7,4 +5,3 @@ dockerfilePath = "Dockerfile"
 [deploy]
 startCommand = "node src/server.js"
 restartPolicyType = "on_failure"
-EOF
