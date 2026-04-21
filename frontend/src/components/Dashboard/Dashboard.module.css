@@ -1,0 +1,237 @@
+.page { display: flex; flex-direction: column; gap: 1.5rem; }
+
+.center { display:flex; align-items:center; justify-content:center; height:60vh; }
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.date { color: var(--gray-400); font-size: .875rem; margin-top: .2rem; }
+
+/* ── Stats grid ──────────────────────────────────────────── */
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr repeat(4, 1fr);
+  gap: 1rem;
+}
+
+/* Calorie card */
+.calorieCard { grid-column: span 1; }
+
+.calorieInner {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.gaugeWrap {
+  position: relative;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.gaugeCenter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: .1rem;
+}
+
+.kcalVal {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+}
+
+.kcalLabel { font-size: .72rem; color: var(--gray-400); font-weight: 600; }
+
+.calorieInfo { flex: 1; }
+
+.calorieTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--gray-800);
+  margin-bottom: .25rem;
+}
+
+.calorieGoal { font-size: .85rem; color: var(--gray-500); margin-bottom: .75rem; }
+
+.progressBar {
+  height: 8px;
+  background: var(--gray-100);
+  border-radius: 99px;
+  overflow: hidden;
+  margin-bottom: .5rem;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 99px;
+  transition: width .5s ease;
+}
+
+.remaining { font-size: .8rem; color: var(--gray-500); }
+
+/* Macro cards */
+.macroCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: .5rem;
+  padding: 1.25rem 1rem;
+}
+
+.macroIcon {
+  width: 44px; height: 44px;
+  border-radius: var(--radius-md);
+  display: flex; align-items: center; justify-content: center;
+}
+
+.macroVal {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  line-height: 1;
+}
+
+.macroUnit { font-size: .8rem; font-weight: 400; color: var(--gray-400); margin-left: 2px; }
+
+.macroName { font-size: .8rem; color: var(--gray-500); font-weight: 500; }
+
+/* Chart */
+.chartCard { }
+
+/* Log */
+.logCard { }
+
+.empty { color: var(--gray-400); font-size: .9rem; text-align: center; padding: 2rem 0; }
+
+.mealGroup { margin-bottom: 1.25rem; }
+
+.mealLabel {
+  font-size: .75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--green-600);
+  margin-bottom: .5rem;
+}
+
+.logRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: .6rem .75rem;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+.logRow:hover { background: var(--gray-50); }
+
+.logName {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .875rem;
+  font-weight: 500;
+}
+
+.logQty {
+  font-size: .75rem;
+  color: var(--gray-400);
+  background: var(--gray-100);
+  padding: .1rem .45rem;
+  border-radius: 99px;
+}
+
+.logMacros {
+  display: flex;
+  gap: .75rem;
+  font-size: .78rem;
+  color: var(--gray-400);
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal {
+  width: 100%;
+  max-width: 460px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.searchWrap { position: relative; }
+
+.searchIcon {
+  position: absolute;
+  left: .85rem; top: 50%;
+  transform: translateY(-50%);
+  color: var(--gray-400);
+}
+
+.foodList {
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-sm);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.foodOption {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .65rem 1rem;
+  background: none;
+  border: none;
+  text-align: left;
+  font-size: .875rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--gray-100);
+  transition: background var(--transition);
+}
+.foodOption:hover { background: var(--green-50); }
+.foodOption:last-child { border-bottom: none; }
+
+.foodCal { font-size: .8rem; color: var(--gray-400); }
+
+.modalFields { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
+
+.modalActions { display: flex; justify-content: flex-end; gap: .5rem; }
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .calorieCard { grid-column: span 2; }
+}
+
+@media (max-width: 600px) {
+  .statsGrid { grid-template-columns: 1fr 1fr; }
+  .calorieCard { grid-column: span 2; }
+  .calorieInner { flex-direction: column; text-align: center; }
+  .logMacros { display: none; }
+  .modalFields { grid-template-columns: 1fr; }
+}

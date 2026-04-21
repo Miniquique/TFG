@@ -1,0 +1,95 @@
+.page { display:flex; flex-direction:column; gap:1.5rem; }
+
+.layout { display:grid; grid-template-columns:1fr 1.4fr; gap:1.5rem; align-items:start; }
+
+.leftCol  { display:flex; flex-direction:column; gap:1.25rem; }
+.rightCol { display:flex; flex-direction:column; gap:1.25rem; }
+
+/* Avatar card */
+.avatarCard { display:flex; align-items:center; gap:1.25rem; }
+
+.avatarBig {
+  width:64px; height:64px;
+  background:linear-gradient(135deg, var(--green-500), var(--green-700));
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:#fff;
+  font-family:var(--font-display);
+  font-size:1.6rem;
+  font-weight:700;
+  flex-shrink:0;
+}
+
+.avatarName { font-family:var(--font-display); font-weight:700; font-size:1.05rem; color:var(--gray-800); }
+.avatarEmail { font-size:.8rem; color:var(--gray-400); margin:.15rem 0 .4rem; }
+
+.rolePill {
+  display:inline-flex; align-items:center; gap:.3rem;
+  padding:.2rem .65rem; border-radius:99px;
+  font-size:.75rem; font-weight:700;
+}
+.admin   { background:#dbeafe; color:#1d4ed8; }
+.premium { background:#ede9fe; color:#7c3aed; }
+.user    { background:var(--gray-100); color:var(--gray-600); }
+
+/* Section cards */
+.section { display:flex; flex-direction:column; gap:.75rem; }
+
+.formGrid { display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+.fullWidth { grid-column:span 2; }
+.formCol { display:flex; flex-direction:column; gap:.75rem; }
+
+/* Admin panel */
+.adminNote { font-size:.85rem; color:var(--gray-500); margin-bottom:.5rem; }
+
+.userTable { display:flex; flex-direction:column; border:1px solid var(--gray-100); border-radius:var(--radius-md); overflow:hidden; }
+
+.tableHead {
+  display:grid; grid-template-columns:1fr auto auto;
+  gap:1rem;
+  padding:.6rem 1rem;
+  background:var(--gray-50);
+  border-bottom:1px solid var(--gray-100);
+  font-size:.75rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--gray-400);
+}
+
+.tableRow {
+  display:grid; grid-template-columns:1fr auto auto;
+  gap:1rem;
+  padding:.75rem 1rem;
+  align-items:center;
+  border-bottom:1px solid var(--gray-50);
+  transition:background var(--transition);
+}
+.tableRow:last-child { border-bottom:none; }
+.tableRow:hover { background:var(--gray-50); }
+.selfRow { background:var(--green-50) !important; }
+
+.userCell { display:flex; align-items:center; gap:.75rem; }
+
+.miniAvatar {
+  width:32px; height:32px;
+  background:var(--green-600);
+  border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  color:#fff; font-weight:700; font-size:.85rem;
+  flex-shrink:0;
+}
+
+.userName { font-weight:600; font-size:.85rem; color:var(--gray-800); }
+.userEmail { font-size:.75rem; color:var(--gray-400); }
+
+.youTag { font-size:.7rem; font-weight:400; color:var(--green-600); }
+
+.roleSelect { min-width:140px; }
+
+@media(max-width:1024px) {
+  .layout { grid-template-columns:1fr; }
+}
+@media(max-width:600px) {
+  .formGrid { grid-template-columns:1fr; }
+  .fullWidth { grid-column:span 1; }
+  .tableHead, .tableRow { grid-template-columns:1fr auto; }
+  .tableHead span:last-child, .tableRow .roleSelect { display:none; }
+}
