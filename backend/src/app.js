@@ -26,6 +26,7 @@ const corsOptions = {
       'http://localhost',
       'https://front-production-f1d2.up.railway.app',
       'https://front-production-f1d2.up.railway.app:80',
+      'https://front-production-f1d2.up.railway.app:8080',
       process.env.FRONTEND_URL,
     ].filter(Boolean);
     
@@ -34,7 +35,8 @@ const corsOptions = {
     if (!origin || allowed.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Permitir todo por ahora para debug
+      console.warn('🚫 CORS blocked origin:', origin);
+      callback(new Error(`CORS policy: origin '${origin}' is not allowed`));
     }
   },
   credentials: true,
