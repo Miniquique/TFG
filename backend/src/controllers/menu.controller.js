@@ -1,9 +1,8 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../config/db');
 
-// NOTA: Si agregas GOOGLE_API_KEY en el .env, descomenta las líneas de abajo para usar IA Gemini
-// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
-// Para mantener menús de demostración permanentemente, usa getDemoMenu() como fallback
+// NOTA: Asegúrate de que GOOGLE_API_KEY está en tu .env para usar Gemini
+const genAI = process.env.GOOGLE_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_API_KEY) : null;
 
 // Menús de demostración - Ejemplos permanentes que se usan cuando no hay API key
 const demoMenus = [
@@ -190,12 +189,7 @@ const generateMenu = async (req, res, next) => {
 
     let menuData = getDemoMenu(days, userData);
 
-    /* ---- PARA ACTIVAR IA GEMINI (Google) ----
-       1. Agrega GOOGLE_API_KEY a tu archivo .env
-       2. Descomenta: const genAI = new GoogleGenerativeAI(...) al inicio del archivo
-       3. Descomenta el bloque de abajo
-    
-    if (process.env.GOOGLE_API_KEY) {
+    if (genAI) {
       try {
         console.log('📊 Generando menú con IA (Google Gemini)...');
         
@@ -233,7 +227,7 @@ Devuelve ÚNICAMENTE un JSON con este formato exacto:
   "avg_daily_calories": 0000
 }`;
 
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text() || '{}';
         
@@ -250,9 +244,8 @@ Devuelve ÚNICAMENTE un JSON con este formato exacto:
     } else {
       console.log('📋 Usando menú de demostración (sin API key de Google)');
     }
-    ---- FIN BLOQUE DE IA ---- */
 
-    const isAiGenerated = process.env.GOOGLE_API_KEY ? true : false;
+    const isAiGenerated = !!genAI;
     const [result] = await db.query(
       'INSERT INTO menus (user_id, title, description, content, total_calories, is_ai_generated, week_start) VALUES (?, ?, ?, ?, ?, ?, CURDATE())',
       [req.user.id, menuData.title, menuData.description, JSON.stringify(menuData), menuData.avg_daily_calories, isAiGenerated]

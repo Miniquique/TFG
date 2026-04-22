@@ -73,6 +73,8 @@ export const menusAPI = {
   getAll: () => api.get('/menus'),
   getById: (id) => api.get(`/menus/${id}`),
   generate: (data) => api.post('/menus/generate', data),
+  getTemplates: () => api.get('/menus/templates'),
+  selectTemplate: (templateId, days) => api.post('/menus/select-template', { templateId, days }),
   remove: (id) => api.delete(`/menus/${id}`),
 };
 

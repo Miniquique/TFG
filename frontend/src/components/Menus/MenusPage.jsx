@@ -2,31 +2,74 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { menusAPI } from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import toast from 'react-hot-toast';
-import { Sparkles, CalendarDays, Trash2, ChevronDown, ChevronUp, Crown, Lock } from 'lucide-react';
+import { Sparkles, CalendarDays, Trash2, ChevronDown, ChevronUp, Crown, Lock, Check, Plus } from 'lucide-react';
 import styles from './MenusPage.module.css';
 
 const MEAL_LABELS = { desayuno:'🌅 Desayuno', almuerzo:'☀️ Almuerzo', comida:'🍽️ Comida', merienda:'🍎 Merienda', cena:'🌙 Cena' };
 
 export default function MenusPage() {
   const { user } = useAuth();
-  const [menus, setMenus]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [expanded, setExpanded] = useState(null);
-  const [showForm, setShowForm] = useState(false);
-  const [generating, setGen]    = useState(false);
-  const [form, setForm]         = useState({ days:7, preferences:'', exclude:'' });
+  const [menus, setMenus]               = useState([]);
+  const [templates, setTemplates]       = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [expanded, setExpanded]         = useState(null);
+  const [showForm, setShowForm]         = useState(false);
+  const [showMultiSelect, setShowMultiSelect] = useState(false);
+  const [selectedTemplates, setSelectedTemplates] = useState(new Set());
+  const [templateDays, setTemplateDays] = useState(7);
+  const [generating, setGen]            = useState(false);
+  const [form, setForm]                 = useState({ days:7, preferences:'', exclude:'' });
 
   const isPremium = user?.role === 'premium' || user?.role === 'admin';
 
   const load = useCallback(async () => {
     try {
-      const { data } = await menusAPI.getAll();
-      setMenus(data);
-    } catch { toast.error('Error cargando menús'); }
+      const [menusRes, templatesRes] = await Promise.all([
+        menusAPI.getAll(),
+        menusAPI.getTemplates()
+      ]);
+      setMenus(menusRes.data);
+      setTemplates(templatesRes.data);
+    } catch { 
+      toast.error('Error cargando datos'); 
+    }
     finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
+
+  const toggleTemplate = (templateId) => {
+    const newSelected = new Set(selectedTemplates);
+    if (newSelected.has(templateId)) {
+      newSelected.delete(templateId);
+    } else {
+      newSelected.add(templateId);
+    }
+    setSelectedTemplates(newSelected);
+  };
+
+  const saveSelectedTemplates = async () => {
+    if (selectedTemplates.size === 0) {
+      toast.error('Selecciona al menos una plantilla');
+      return;
+    }
+
+    setGen(true);
+    try {
+      for (const templateId of selectedTemplates) {
+        await menusAPI.selectTemplate(templateId, templateDays);
+      }
+      toast.success(`¡${selectedTemplates.size} menú(s) agregado(s)!`);
+      setShowMultiSelect(false);
+      setSelectedTemplates(new Set());
+      setTemplateDays(7);
+      load();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Error guardando menús');
+    } finally { 
+      setGen(false); 
+    }
+  };
 
   const generate = async () => {
     setGen(true);
@@ -65,11 +108,16 @@ export default function MenusPage() {
           <h1 className="page-title">Menús con IA</h1>
           <p className={styles.sub}>Genera planes alimenticios semanales personalizados con inteligencia artificial</p>
         </div>
-        {isPremium && (
-          <button className="btn btn-primary" onClick={() => setShowForm(true)}>
-            <Sparkles size={16}/> Generar menú
+        <div style={{display:'flex', gap:'.5rem', flexWrap:'wrap'}}>
+          <button className="btn btn-secondary" onClick={() => setShowMultiSelect(true)}>
+            <Plus size={16}/> Elegir plantillas
           </button>
-        )}
+          {isPremium && (
+            <button className="btn btn-primary" onClick={() => setShowForm(true)}>
+              <Sparkles size={16}/> Generar menú
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Premium upsell */}
@@ -180,6 +228,80 @@ export default function MenusPage() {
           </div>
         </div>
       )}
+
+      {/* Modal Seleccionar Múltiples Plantillas */}
+      {showMultiSelect && (
+        <div className={styles.overlay} onClick={() => setShowMultiSelect(false)}>
+          <div className={`card ${styles.multiSelectModal}`} onClick={e => e.stopPropagation()}>
+            <div className={styles.modalHead}>
+              <Plus size={22} color="var(--green-600)"/>
+              <h3 className="section-title" style={{margin:0}}>Elegir plantillas de menú</h3>
+            </div>
+            <p style={{fontSize:'.875rem',color:'var(--gray-500)',marginBottom:'1rem'}}>Selecciona una o más plantillas para guardar como tus menús.</p>
+
+            <div style={{marginBottom:'1.5rem'}}>
+              <label className="label">Número de días para cada menú</label>
+              <select 
+                className="input" 
+                value={templateDays} 
+                onChange={e => setTemplateDays(+e.target.value)}
+              >
+                {[3,5,7,14].map(d => <option key={d} value={d}>{d} días</option>)}
+              </select>
+            </div>
+
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'1rem', marginBottom:'1.5rem', maxHeight:'400px', overflowY:'auto'}}>
+              {templates.map(template => (
+                <div 
+                  key={template.id} 
+                  className={`${styles.templateOption} ${selectedTemplates.has(template.id) ? styles.templateOptionSelected : ''}`}
+                  onClick={() => toggleTemplate(template.id)}
+                  style={{cursor:'pointer'}}
+                >
+                  <div style={{display:'flex', alignItems:'flex-start', gap:'.75rem'}}>
+                    <div style={{
+                      width:'20px',
+                      height:'20px',
+                      border:'2px solid var(--gray-300)',
+                      borderRadius:'4px',
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center',
+                      marginTop:'.2rem',
+                      backgroundColor: selectedTemplates.has(template.id) ? 'var(--green-600)' : 'transparent',
+                      borderColor: selectedTemplates.has(template.id) ? 'var(--green-600)' : 'var(--gray-300)',
+                      transition:'all .2s'
+                    }}>
+                      {selectedTemplates.has(template.id) && <Check size={14} color="white" strokeWidth={3}/>}
+                    </div>
+                    <div style={{flex:1}}>
+                      <p style={{margin:'0 0 .3rem 0', fontWeight:600, fontSize:'.95rem'}}>{template.name}</p>
+                      <p style={{margin:'0 0 .5rem 0', fontSize:'.8rem', color:'var(--gray-500)'}}>{template.description}</p>
+                      <span className="badge badge-green" style={{fontSize:'.75rem'}}>{template.total_calories} kcal/día</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className={styles.modalActions}>
+              <button className="btn btn-ghost" onClick={() => setShowMultiSelect(false)}>Cancelar</button>
+              <button 
+                className="btn btn-primary" 
+                onClick={saveSelectedTemplates} 
+                disabled={generating || selectedTemplates.size === 0}
+              >
+                {generating ? (
+                  <><span className="spinner"/> Guardando...</>
+                ) : (
+                  <><Check size={15}/> Agregar {selectedTemplates.size > 0 ? `(${selectedTemplates.size})` : ''}</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

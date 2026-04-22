@@ -13,7 +13,7 @@ const dailyLogRoutes = require('./routes/dailyLog.routes');
 const menuRoutes = require('./routes/menu.routes');
 
 const app = express();
-
+app.set('trust proxy', 1);
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
