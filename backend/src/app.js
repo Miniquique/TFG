@@ -16,17 +16,41 @@ const app = express();
 
 // ── Seguridad ──────────────────────────────────────────────
 app.use(helmet());
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'front-production-f1d2.up.railway.app:80',
+
+// CORS debe ser lo primero
+const corsOptions = {
+  origin: function(origin, callback) {
+    const allowed = [
+      'http://localhost:3000',
+      'http://localhost:80',
+      'http://localhost',
+      'https://front-production-f1d2.up.railway.app',
+      'https://front-production-f1d2.up.railway.app:80',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean);
+    
+    console.log('🌐 CORS Origin:', origin, '| Allowed:', allowed);
+    
+    if (!origin || allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permitir todo por ahora para debug
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Preflight para todas las rutas
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
   max: 200,
   message: { error: 'Demasiadas solicitudes, intenta más tarde.' },
+  skip: (req) => req.method === 'OPTIONS',
 });
 app.use('/api', limiter);
 
@@ -34,6 +58,16 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
+
+// Logging de debug para CADA petición
+app.use((req, res, next) => {
+  console.log(`\n📨 ${new Date().toISOString()}`);
+  console.log(`   Método: ${req.method}`);
+  console.log(`   Path: ${req.path}`);
+  console.log(`   Full URL: ${req.originalUrl}`);
+  console.log(`   Headers:`, JSON.stringify(req.headers, null, 2));
+  next();
+});
 
 // ── Rutas ──────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);

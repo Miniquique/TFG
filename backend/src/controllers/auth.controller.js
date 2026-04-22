@@ -44,12 +44,17 @@ const register = async (req, res, next) => {
 // POST /api/auth/login
 const login = async (req, res, next) => {
   try {
+    console.log('🚀 LOGIN: Controlador activado');
+    console.log('🚀 LOGIN: body recibido:', req.body);
+    
     const { email, password } = req.body;
 
     if (!email || !password) {
+      console.log('🚀 LOGIN: Email o password vacíos');
       return res.status(400).json({ error: 'Email y contraseña son obligatorios' });
     }
 
+    console.log(`🚀 LOGIN: Buscando usuario: ${email}`);
     const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
     if (rows.length === 0) {
       console.log(`❌ Login fallido: Usuario no encontrado: ${email}`);
@@ -71,6 +76,7 @@ const login = async (req, res, next) => {
     console.log(`✅ Login exitoso para ${email}`);
     res.json({ token: generateToken(safeUser), user: safeUser });
   } catch (err) {
+    console.error('🚨 LOGIN ERROR:', err);
     next(err);
   }
 };

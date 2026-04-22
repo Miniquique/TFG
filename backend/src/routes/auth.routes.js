@@ -3,6 +3,11 @@ const router = require('express').Router();
 const { register, login, me } = require('../controllers/auth.controller');
 const { authenticate } = require('../middleware/auth.middleware');
 
+// Test endpoint
+router.get('/test', (req, res) => {
+  res.json({ message: 'Auth router is working' });
+});
+
 router.post('/register', register);
 router.post('/login', login);
 router.get('/me', authenticate, me);

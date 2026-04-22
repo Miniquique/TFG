@@ -1,7 +1,19 @@
 import axios from 'axios';
 
+// En producción (Railway): https://backend-production-3b05.up.railway.app:8080/api
+// En desarrollo: http://localhost:5000/api
+const apiUrl = process.env.REACT_APP_API_URL || (() => {
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:5000/api';
+  }
+  // En Railway, apunta al backend directamente
+  return 'https://backend-production-3b05.up.railway.app:8080/api';
+})();
+
+console.log('🔌 API URL:', apiUrl);
+
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || '/api',
+  baseURL: apiUrl,
   timeout: 30000,
 });
 
