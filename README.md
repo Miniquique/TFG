@@ -6,16 +6,17 @@ Aplicación web de gestión nutricional inteligente con IA. Escanea listas de la
 
 ```
 smartfoodai/
-├── docker-compose.yml          # Orquestación de contenedores
-├── .env.example                # Variables de entorno (copia a .env)
+├── docker-compose.yml           # Orquestación de contenedores
+├── .env.example                 # Variables de entorno (copia a .env)
 │
-├── backend/                    # Node.js + Express API REST
+├── backend/                     # Node.js + Express API REST
 │   ├── src/
-│   │   ├── app.js              # Configuración Express
-│   │   ├── server.js           # Punto de entrada
+│   │   ├── app.js               # Configuración Express
+│   │   ├── server.js            # Punto de entrada
 │   │   ├── config/
-│   │   │   ├── db.js           # Pool MySQL
-│   │   │   └── init.sql        # Schema y datos iniciales
+│   │   │   ├── db.js            # Pool MySQL
+│   │   │   ├── init.sql         # Schema y datos iniciales
+│   │   │   └── openfoodfacts.js # Conexión con Open Food Facts
 │   │   ├── middleware/
 │   │   │   └── auth.middleware.js  # JWT + autorización por roles
 │   │   ├── controllers/        # Lógica de negocio
@@ -108,8 +109,8 @@ El administrador puede cambiar el rol de cualquier usuario desde **Perfil → Pa
 
 ## 🤖 IA integrada
 
-- **Escáner**: usa `claude-opus-4-5` con visión para leer listas de la compra manuscritas o impresas.
-- **Generador de menús**: usa `claude-opus-4-5` para crear planes semanales personalizados teniendo en cuenta la despensa del usuario, sus macros objetivo y preferencias alimentarias.
+- **Escáner**: usa `gemini-2.5-flash` con visión para leer listas de la compra manuscritas o impresas.
+- **Generador de menús**: usa `gemini-2.5-flash` para crear planes semanales personalizados teniendo en cuenta la despensa del usuario, sus macros objetivo y preferencias alimentarias.
 
 ## 🛡️ Roles de usuario
 
