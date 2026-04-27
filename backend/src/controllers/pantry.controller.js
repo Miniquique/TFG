@@ -22,7 +22,21 @@ const getPantry = async (req, res, next) => {
 // POST /api/pantry
 const addToPantry = async (req, res, next) => {
   try {
-    const { food_id, quantity, unit, expiry_date, location } = req.body;
+    let { food_id, quantity, unit, expiry_date, location, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g } = req.body;
+
+    // Si no tiene food_id pero tiene nombre, es un alimento nuevo de OFF
+    if (!food_id && name) {
+      console.log(`🆕 Creando nuevo alimento desde OFF: ${name}`);
+      const [newFood] = await db.query(
+        'INSERT INTO foods (name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, unit) VALUES (?,?,?,?,?,?,?)',
+        [name, calories_per_100g || 0, protein_per_100g || 0, carbs_per_100g || 0, fat_per_100g || 0, fiber_per_100g || 0, unit || 'g']
+      );
+      food_id = newFood.insertId;
+    }
+
+    if (!food_id) {
+      return res.status(400).json({ error: 'ID de alimento o datos del alimento requeridos' });
+    }
 
     // Si ya existe ese alimento en la despensa, suma la cantidad
     const [existing] = await db.query(
@@ -33,14 +47,14 @@ const addToPantry = async (req, res, next) => {
     if (existing.length > 0) {
       await db.query(
         'UPDATE pantry SET quantity = quantity + ?, expiry_date = COALESCE(?, expiry_date), location = COALESCE(?, location) WHERE id = ?',
-        [quantity, expiry_date || null, location || null, existing[0].id]
+        [quantity || 0, expiry_date || null, location || null, existing[0].id]
       );
       return res.json({ message: 'Cantidad actualizada en despensa' });
     }
 
     await db.query(
       'INSERT INTO pantry (user_id, food_id, quantity, unit, expiry_date, location) VALUES (?, ?, ?, ?, ?, ?)',
-      [req.user.id, food_id, quantity, unit || 'g', expiry_date || null, location || 'despensa']
+      [req.user.id, food_id, quantity || 0, unit || 'g', expiry_date || null, location || 'despensa']
     );
     res.status(201).json({ message: 'Alimento añadido a la despensa' });
   } catch (err) {

@@ -1,8 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const db = require('../config/db');
-
-// NOTA: Si agregas GOOGLE_API_KEY en el .env, descomenta las líneas de abajo para usar IA Gemini
-// const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
+const { fetchOFF } = require('../config/openfoodfacts');
+const genAI = process.env.GOOGLE_API_KEY ? new GoogleGenerativeAI(process.env.GOOGLE_API_KEY) : null;
 
 // Función auxiliar para procesar imagen sin IA (fallback)
 const procesarListaSinIA = (text) => {
@@ -20,7 +19,7 @@ const procesarListaSinIA = (text) => {
 /**
  * POST /api/scanner/scan
  * Recibe una imagen en base64 de la lista de la compra,
- * la procesa con Google Gemini (o fallback) y devuelve los artículos reconocidos.
+ * la procesa con Google Gemini y devuelve los artículos reconocidos.
  */
 const scanShoppingList = async (req, res, next) => {
   try {
@@ -29,18 +28,13 @@ const scanShoppingList = async (req, res, next) => {
       return res.status(400).json({ error: 'Se requiere imagen en base64' });
     }
 
-    let parsed;
+    let parsed = { items: [] };
 
-    /* ---- PARA ACTIVAR IA GEMINI (Google) ----
-       1. Agrega GOOGLE_API_KEY a tu archivo .env
-       2. Descomenta: const genAI = new GoogleGenerativeAI(...) al inicio del archivo
-       3. Descomenta el bloque de abajo
-    
     if (process.env.GOOGLE_API_KEY) {
       try {
         console.log('📸 Analizando imagen con IA (Google Gemini)...');
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-        
+        const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
         const result = await model.generateContent([
           {
             inlineData: {
@@ -50,6 +44,7 @@ const scanShoppingList = async (req, res, next) => {
           },
           {
             text: `Analiza esta lista de la compra y extrae todos los artículos.
+Usa nombres concisos y genéricos (ej: "Leche" en lugar de "Leche semidesnatada 1L Marca") para facilitar la búsqueda en bases de datos.
 Devuelve SOLO un JSON con este formato exacto, sin texto adicional:
 {
   "items": [
@@ -60,38 +55,80 @@ Si no puedes leer algún artículo claramente, inclúyelo igualmente con tu mejo
           },
         ]);
 
-        const text = result.response.text() || '{}';
+        const responseText = result.response.text() || '{}';
+        console.log('📄 Respuesta bruta de Gemini:', responseText);
+
         try {
-          const clean = text.replace(/```json|```/g, '').trim();
+          // Limpiar posibles bloques de código markdown
+          const clean = responseText.replace(/```json|```/g, '').trim();
           parsed = JSON.parse(clean);
-          console.log('✅ Imagen analizada con IA exitosamente');
-        } catch {
-          console.log('⚠️ Error al parsear respuesta de IA, usando fallback');
-          parsed = procesarListaSinIA(text);
+          console.log('✅ JSON parseado con éxito:', JSON.stringify(parsed, null, 2));
+        } catch (parseErr) {
+          console.log('⚠️ Error al parsear JSON de Gemini:', parseErr.message);
+          console.log('🔄 Intentando fallback sin IA...');
+          parsed = procesarListaSinIA(responseText);
         }
       } catch (err) {
-        console.log(`⚠️ Error con Google Gemini: ${err.message}, usando fallback`);
+        console.error('❌ Error crítico en Google Gemini:', err);
         parsed = { items: [] };
       }
     } else {
-      console.log('📋 Usando modo fallback (sin API key de Google)');
-      parsed = { items: [] };
+      console.log('📋 No hay API KEY de Google, el escáner no funcionará correctamente');
     }
-    ---- FIN BLOQUE DE IA ---- */
-    
-    parsed = { items: [] };
 
-    // Intentar hacer match con alimentos del catálogo
+    // Intentar hacer match con alimentos del catálogo o Open Food Facts
     const enrichedItems = await Promise.all(
       (parsed.items || []).map(async (item) => {
-        const [matches] = await db.query(
+        // 1. Intentar match local
+        const [localMatches] = await db.query(
           'SELECT id, name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g FROM foods WHERE name LIKE ? LIMIT 1',
           [`%${item.name}%`]
         );
-        return {
-          ...item,
-          matched_food: matches[0] || null,
-        };
+
+        if (localMatches.length > 0) {
+          return { ...item, matched_food: localMatches[0] };
+        }
+
+        // 2. Si no hay match local, intentar en Open Food Facts
+        try {
+          console.log(`🔍 Buscando "${item.name}" en Open Food Facts...`);
+          const offRes = await fetchOFF(
+            `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(item.name)}&json=1&page_size=1&fields=product_name,nutriments`
+          );
+
+          if (!offRes.ok) {
+            console.log(`⚠️ OFF respondió con status: ${offRes.status}`);
+            return { ...item, matched_food: null };
+          }
+
+          const offData = await offRes.json();
+          console.log(`📊 OFF resultados para "${item.name}":`, offData.count || 0);
+
+          const p = offData.products?.[0];
+
+          if (p) {
+            console.log(`✅ Coincidencia encontrada en OFF: ${p.product_name}`);
+            // Creamos un objeto que simula el de la DB local
+            return {
+              ...item,
+              matched_food: {
+                id: null, // Indicamos que es externo
+                name: p.product_name,
+                calories_per_100g: p.nutriments?.['energy-kcal_100g'] || 0,
+                protein_per_100g: p.nutriments?.proteins_100g || 0,
+                carbs_per_100g: p.nutriments?.carbohydrates_100g || 0,
+                fat_per_100g: p.nutriments?.fat_100g || 0,
+                source: 'openfoodfacts'
+              }
+            };
+          } else {
+            console.log(`❌ No se encontraron productos en OFF para "${item.name}"`);
+          }
+        } catch (e) {
+          console.error('❌ Error buscando en OFF:', e.message);
+        }
+
+        return { ...item, matched_food: null };
       })
     );
 
@@ -114,11 +151,36 @@ const addScannedToPantry = async (req, res, next) => {
 
     let added = 0;
     for (const item of items) {
-      if (!item.food_id) continue;
+      let foodId = item.food_id;
+
+      // Si no tiene food_id, es un alimento nuevo (probablemente de Open Food Facts)
+      // Lo creamos en la tabla de foods primero
+      if (!foodId && item.name) {
+        try {
+          const [result] = await db.query(
+            'INSERT INTO foods (name, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, fiber_per_100g, unit) VALUES (?,?,?,?,?,?,?)',
+            [
+              item.name,
+              item.calories_per_100g || 0,
+              item.protein_per_100g || 0,
+              item.carbs_per_100g || 0,
+              item.fat_per_100g || 0,
+              item.fiber_per_100g || 0,
+              item.unit || 'g'
+            ]
+          );
+          foodId = result.insertId;
+        } catch (e) {
+          console.error(`Error creando alimento ${item.name}:`, e.message);
+          continue; // Si falla la creación, saltamos este item
+        }
+      }
+
+      if (!foodId) continue;
 
       const [existing] = await db.query(
         'SELECT id FROM pantry WHERE user_id = ? AND food_id = ?',
-        [req.user.id, item.food_id]
+        [req.user.id, foodId]
       );
 
       if (existing.length > 0) {
@@ -129,7 +191,7 @@ const addScannedToPantry = async (req, res, next) => {
       } else {
         await db.query(
           'INSERT INTO pantry (user_id, food_id, quantity, unit) VALUES (?, ?, ?, ?)',
-          [req.user.id, item.food_id, item.quantity || 1, item.unit || 'g']
+          [req.user.id, foodId, item.quantity || 1, item.unit || 'g']
         );
       }
       added++;

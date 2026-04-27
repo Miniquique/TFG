@@ -1,13 +1,14 @@
-.page { display: flex; flex-direction: column; gap: 1.5rem; }
+.page { display: flex; flex-direction: column; gap: 1.5rem; overflow-x: hidden; }
 
 .center { display:flex; align-items:center; justify-content:center; height:60vh; }
 
 .header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 1rem;
+  max-width: 100%;
 }
 
 .date { color: var(--gray-400); font-size: .875rem; margin-top: .2rem; }
@@ -15,12 +16,12 @@
 /* ── Stats grid ──────────────────────────────────────────── */
 .statsGrid {
   display: grid;
-  grid-template-columns: 1fr repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
 }
 
 /* Calorie card */
-.calorieCard { grid-column: span 1; }
+.calorieCard { grid-column: 1 / -1; }
 
 .calorieInner {
   display: flex;
@@ -224,13 +225,18 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-  .statsGrid { grid-template-columns: 1fr 1fr; }
-  .calorieCard { grid-column: span 2; }
+  .statsGrid { grid-template-columns: repeat(2, 1fr); }
+  .calorieCard { grid-column: 1 / -1; }
+}
+
+@media (max-width: 768px) {
+  .header { flex-direction: column; align-items: stretch; }
+  .header button { align-self: flex-start; }
 }
 
 @media (max-width: 600px) {
   .statsGrid { grid-template-columns: 1fr 1fr; }
-  .calorieCard { grid-column: span 2; }
+  .calorieCard { grid-column: 1 / -1; }
   .calorieInner { flex-direction: column; text-align: center; }
   .logMacros { display: none; }
   .modalFields { grid-template-columns: 1fr; }

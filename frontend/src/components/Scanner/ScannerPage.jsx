@@ -5,13 +5,13 @@ import { ScanLine, Upload, Camera, CheckCircle, XCircle, ShoppingCart, RefreshCw
 import styles from './ScannerPage.module.css';
 
 export default function ScannerPage() {
-  const [preview, setPreview]       = useState(null);
-  const [base64, setBase64]         = useState(null);
-  const [mediaType, setMediaType]   = useState('image/jpeg');
-  const [scanning, setScanning]     = useState(false);
-  const [results, setResults]       = useState(null);
-  const [selected, setSelected]     = useState({});
-  const [adding, setAdding]         = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [base64, setBase64] = useState(null);
+  const [mediaType, setMediaType] = useState('image/jpeg');
+  const [scanning, setScanning] = useState(false);
+  const [results, setResults] = useState(null);
+  const [selected, setSelected] = useState({});
+  const [adding, setAdding] = useState(false);
   const fileRef = useRef();
 
   const handleFile = (file) => {
@@ -54,10 +54,14 @@ export default function ScannerPage() {
     const toAdd = results
       .filter((_, i) => selected[i] && results[i].matched_food)
       .map(item => ({
-        food_id:  item.matched_food.id,
-        name:     item.matched_food.name,
+        food_id: item.matched_food.id,
+        name: item.matched_food.name,
         quantity: item.quantity || 1,
-        unit:     item.unit || 'g',
+        unit: item.unit || 'g',
+        calories_per_100g: item.matched_food.calories_per_100g,
+        protein_per_100g: item.matched_food.protein_per_100g,
+        carbs_per_100g: item.matched_food.carbs_per_100g,
+        fat_per_100g: item.matched_food.fat_per_100g,
       }));
 
     if (!toAdd.length) { toast.error('Selecciona al menos un artículo reconocido'); return; }
@@ -101,11 +105,11 @@ export default function ScannerPage() {
             {preview
               ? <img src={preview} alt="Lista de la compra" className={styles.preview} />
               : <div className={styles.dropInner}>
-                  <div className={styles.dropIcon}><ImageIcon size={32} /></div>
-                  <p className={styles.dropText}>Arrastra una foto aquí</p>
-                  <p className={styles.dropSub}>o haz clic para seleccionar</p>
-                  <span className={styles.dropFormats}>JPG, PNG, WEBP</span>
-                </div>
+                <div className={styles.dropIcon}><ImageIcon size={32} /></div>
+                <p className={styles.dropText}>Arrastra una foto aquí</p>
+                <p className={styles.dropSub}>o haz clic para seleccionar</p>
+                <span className={styles.dropFormats}>JPG, PNG, WEBP</span>
+              </div>
             }
           </div>
 
@@ -113,11 +117,11 @@ export default function ScannerPage() {
 
           <div className={styles.uploadActions}>
             <button className="btn btn-secondary" onClick={() => fileRef.current.click()}>
-              <Upload size={15}/> Seleccionar archivo
+              <Upload size={15} /> Seleccionar archivo
             </button>
             {preview && (
               <button className="btn btn-ghost" onClick={() => { setPreview(null); setBase64(null); setResults(null); }}>
-                <RefreshCw size={15}/> Cambiar
+                <RefreshCw size={15} /> Cambiar
               </button>
             )}
           </div>
@@ -125,8 +129,8 @@ export default function ScannerPage() {
           {base64 && (
             <button className={`btn btn-primary ${styles.scanBtn}`} onClick={scan} disabled={scanning}>
               {scanning
-                ? <><span className="spinner"/>  Analizando con IA...</>
-                : <><Camera size={16}/> Escanear lista</>
+                ? <><span className="spinner" />  Analizando con IA...</>
+                : <><Camera size={16} /> Escanear lista</>
               }
             </button>
           )}
@@ -139,9 +143,9 @@ export default function ScannerPage() {
         {/* Results panel */}
         <div className={`card ${styles.resultsPanel}`}>
           <div className={styles.resultsHeader}>
-            <h3 className="section-title"><ShoppingCart size={18}/> Artículos detectados</h3>
+            <h3 className="section-title"><ShoppingCart size={18} /> Artículos detectados</h3>
             {results && results.length > 0 && (
-              <button className="btn btn-ghost" style={{fontSize:'.8rem'}} onClick={toggleAll}>
+              <button className="btn btn-ghost" style={{ fontSize: '.8rem' }} onClick={toggleAll}>
                 Seleccionar todos
               </button>
             )}
@@ -149,14 +153,14 @@ export default function ScannerPage() {
 
           {!results && (
             <div className={styles.resultsEmpty}>
-              <ScanLine size={48} color="#d1d5db"/>
+              <ScanLine size={48} color="#d1d5db" />
               <p>Los artículos de tu lista aparecerán aquí tras el escaneo</p>
             </div>
           )}
 
           {results && results.length === 0 && (
             <div className={styles.resultsEmpty}>
-              <XCircle size={48} color="#fca5a5"/>
+              <XCircle size={48} color="#fca5a5" />
               <p>No se detectaron artículos. Prueba con una imagen más clara.</p>
             </div>
           )}
@@ -167,7 +171,7 @@ export default function ScannerPage() {
                 {results.map((item, i) => (
                   <div key={i} className={`${styles.resultItem} ${selected[i] ? styles.resultSelected : ''}`}>
                     <label className={styles.resultCheck}>
-                      <input type="checkbox" checked={!!selected[i]} onChange={e => setSelected(p => ({...p, [i]: e.target.checked}))} />
+                      <input type="checkbox" checked={!!selected[i]} onChange={e => setSelected(p => ({ ...p, [i]: e.target.checked }))} />
                     </label>
                     <div className={styles.resultInfo}>
                       <p className={styles.resultName}>{item.name}</p>
@@ -176,12 +180,12 @@ export default function ScannerPage() {
                     <div className={styles.resultMatch}>
                       {item.matched_food
                         ? <span className={styles.matched}>
-                            <CheckCircle size={14}/> {item.matched_food.name}
-                            <span className={styles.matchCal}>{item.matched_food.calories_per_100g} kcal</span>
-                          </span>
+                          <CheckCircle size={14} /> {item.matched_food.name}
+                          <span className={styles.matchCal}>{item.matched_food.calories_per_100g} kcal</span>
+                        </span>
                         : <span className={styles.unmatched}>
-                            <XCircle size={14}/> Sin coincidencia
-                          </span>
+                          <XCircle size={14} /> Sin coincidencia
+                        </span>
                       }
                     </div>
                   </div>
@@ -192,10 +196,10 @@ export default function ScannerPage() {
                 <p className={styles.addSummary}>
                   {Object.values(selected).filter(Boolean).length} de {results.length} seleccionados
                   {' · '}
-                  {results.filter((r,i) => selected[i] && r.matched_food).length} se añadirán a la despensa
+                  {results.filter((r, i) => selected[i] && r.matched_food).length} se añadirán a la despensa
                 </p>
                 <button className="btn btn-primary" onClick={addToPantry} disabled={adding}>
-                  {adding ? <><span className="spinner"/> Añadiendo...</> : <><ShoppingCart size={15}/> Añadir a despensa</>}
+                  {adding ? <><span className="spinner" /> Añadiendo...</> : <><ShoppingCart size={15} /> Añadir a despensa</>}
                 </button>
               </div>
             </>

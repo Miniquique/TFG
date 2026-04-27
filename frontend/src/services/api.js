@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || '/api',
-  timeout: 30000,
+  timeout: 120000,
 });
 
 // Adjuntar token JWT automáticamente
@@ -42,6 +42,7 @@ export const usersAPI = {
 // ── Foods ──────────────────────────────────────────────────
 export const foodsAPI = {
   search: (params) => api.get('/foods', { params }),
+  searchOpenFoodFacts: (search) => api.get('/foods/search-openfoodfacts', { params: { search } }),
   getById: (id) => api.get(`/foods/${id}`),
   create: (data) => api.post('/foods', data),
 };
@@ -77,5 +78,8 @@ export const menusAPI = {
   selectTemplate: (templateId, days) => api.post('/menus/select-template', { templateId, days }),
   remove: (id) => api.delete(`/menus/${id}`),
 };
+
+
+
 
 export default api;

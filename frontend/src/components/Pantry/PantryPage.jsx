@@ -39,15 +39,23 @@ export default function PantryPage() {
   }, [foodSearch]);
 
   const addItem = async () => {
-    if (!addForm.food_id || !addForm.quantity) { toast.error('Selecciona alimento y cantidad'); return; }
+    const isNew = addForm.food_id === null && addForm.name;
+    if ((!addForm.food_id && !isNew) || !addForm.quantity) {
+      toast.error('Selecciona alimento y cantidad');
+      return;
+    }
+
     try {
       await pantryAPI.add(addForm);
       toast.success('Añadido a la despensa');
       setShowAdd(false);
-      setAddForm({ food_id:'', quantity:'', unit:'g', expiry_date:'', location:'despensa' });
-      setFoodSearch(''); setFoodResults([]);
+      setAddForm({ food_id: '', quantity: '', unit: 'g', expiry_date: '', location: 'despensa' });
+      setFoodSearch('');
+      setFoodResults([]);
       load();
-    } catch { toast.error('Error al añadir'); }
+    } catch {
+      toast.error('Error al añadir');
+    }
   };
 
   const saveEdit = async (id) => {
@@ -185,11 +193,25 @@ export default function PantryPage() {
             </div>
             {foodResults.length > 0 && (
               <div className={styles.foodList}>
-                {foodResults.map(f => (
-                  <button key={f.id} className={styles.foodOption}
-                    onClick={() => { setAddForm(p=>({...p,food_id:f.id})); setFoodSearch(f.name); setFoodResults([]); }}>
+                {foodResults.map((f, idx) => (
+                  <button key={f.id || idx} className={styles.foodOption}
+                    onClick={() => {
+                      setAddForm(p => ({
+                        ...p,
+                        food_id: f.id,
+                        name: f.name,
+                        calories_per_100g: f.calories_per_100g,
+                        protein_per_100g: f.protein_per_100g,
+                        carbs_per_100g: f.carbs_per_100g,
+                        fat_per_100g: f.fat_per_100g,
+                        fiber_per_100g: f.fiber_per_100g,
+                        image_url: f.image_url
+                      }));
+                      setFoodSearch(f.name);
+                      setFoodResults([]);
+                    }}>
                     <span>{f.name}</span>
-                    <span style={{fontSize:'.8rem',color:'var(--gray-400)'}}>{f.calories_per_100g} kcal/100g</span>
+                    <span style={{ fontSize: '.8rem', color: 'var(--gray-400)' }}>{f.calories_per_100g} kcal/100g</span>
                   </button>
                 ))}
               </div>

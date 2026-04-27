@@ -135,7 +135,7 @@ const demoMenus = [
 const getDemoMenu = (days = 7, userData) => {
   // Seleccionar un menú aleatorio de los ejemplos
   const menuEjemplo = demoMenus[Math.floor(Math.random() * demoMenus.length)];
-  
+
   return {
     title: `Menú Semanal ${menuEjemplo.name} - ${userData.name}`,
     description: `Plan nutricional personalizado de ${days} días con objetivo de ${userData.daily_calorie_goal} kcal/día`,
@@ -192,7 +192,7 @@ const generateMenu = async (req, res, next) => {
     if (genAI) {
       try {
         console.log('📊 Generando menú con IA (Google Gemini)...');
-        
+
         const [pantryItems] = await db.query(
           `SELECT f.name, p.quantity, p.unit FROM pantry p JOIN foods f ON f.id = p.food_id WHERE p.user_id = ?`,
           [req.user.id]
@@ -230,7 +230,7 @@ Devuelve ÚNICAMENTE un JSON con este formato exacto:
         const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
         const result = await model.generateContent(prompt);
         const text = result.response.text() || '{}';
-        
+
         try {
           const clean = text.replace(/```json|```/g, '').trim();
           menuData = JSON.parse(clean);
@@ -245,14 +245,30 @@ Devuelve ÚNICAMENTE un JSON con este formato exacto:
       console.log('📋 Usando menú de demostración (sin API key de Google)');
     }
 
-    const isAiGenerated = !!genAI;
+    const isAiGenerated = !!genAI && menuData.title !== `Menú Semanal ${userData.name}`; // Simplistic check if it's the demo menu
+
+    console.log('💾 Guardando menú en DB:', {
+      user_id: req.user.id,
+      title: menuData.title,
+      total_calories: menuData.avg_daily_calories
+    });
+
     const [result] = await db.query(
       'INSERT INTO menus (user_id, title, description, content, total_calories, is_ai_generated, week_start) VALUES (?, ?, ?, ?, ?, ?, CURDATE())',
-      [req.user.id, menuData.title, menuData.description, JSON.stringify(menuData), menuData.avg_daily_calories, isAiGenerated]
+      [
+        req.user.id,
+        (menuData.title || 'Menú Semanal').substring(0, 200),
+        menuData.description || '',
+        JSON.stringify(menuData),
+        menuData.avg_daily_calories || 0,
+        isAiGenerated
+      ]
     );
 
+    console.log('✅ Menú guardado con ID:', result.insertId);
     res.status(201).json({ id: result.insertId, ...menuData });
   } catch (err) {
+    console.error('❌ Error en generateMenu:', err);
     next(err);
   }
 };
@@ -278,7 +294,7 @@ const getMenuTemplates = async (req, res, next) => {
 const selectMenuTemplate = async (req, res, next) => {
   try {
     const { templateId, days = 7 } = req.body;
-    
+
     if (templateId === undefined || templateId < 0 || templateId >= demoMenus.length) {
       return res.status(400).json({ error: 'ID de template inválido' });
     }
