@@ -16,7 +16,8 @@ export default function Dashboard() {
   const [search, setSearch]     = useState('');
   const [loading, setLoading]   = useState(true);
   const [showAdd, setShowAdd]   = useState(false);
-  const [addForm, setAddForm]   = useState({ food_id:'', quantity:100, meal_type:'comida' });
+  const emptyForm = { food_id:'', quantity:100, meal_type:'comida', name:'', calories_per_100g:0, protein_per_100g:0, carbs_per_100g:0, fat_per_100g:0, fiber_per_100g:0, source:'' };
+  const [addForm, setAddForm]   = useState(emptyForm);
   const today = new Date().toISOString().slice(0, 10);
 
   const fetchLog = useCallback(async () => {
@@ -43,13 +44,29 @@ export default function Dashboard() {
     return () => clearTimeout(t);
   }, [search]);
 
+  const selectFood = (f) => {
+    setAddForm(p => ({
+      ...p,
+      food_id: f.id,
+      name: f.name,
+      calories_per_100g: f.calories_per_100g || 0,
+      protein_per_100g: f.protein_per_100g || 0,
+      carbs_per_100g: f.carbs_per_100g || 0,
+      fat_per_100g: f.fat_per_100g || 0,
+      fiber_per_100g: f.fiber_per_100g || 0,
+      source: f.source || 'local',
+    }));
+    setSearch(f.name);
+    setFoods([]);
+  };
+
   const addEntry = async () => {
-    if (!addForm.food_id) { toast.error('Selecciona un alimento'); return; }
+    if (!addForm.food_id && !addForm.name) { toast.error('Selecciona un alimento'); return; }
     try {
       await dailyLogAPI.add({ ...addForm, date: today });
       toast.success('Registrado');
       setShowAdd(false);
-      setAddForm({ food_id:'', quantity:100, meal_type:'comida' });
+      setAddForm(emptyForm);
       setSearch(''); setFoods([]);
       fetchLog(); fetchStats();
     } catch { toast.error('Error al registrar'); }
@@ -192,11 +209,11 @@ export default function Dashboard() {
             </div>
             {foods.length > 0 && (
               <div className={styles.foodList}>
-                {foods.map(f => (
-                  <button key={f.id} className={styles.foodOption}
-                    onClick={() => { setAddForm(p => ({...p, food_id: f.id})); setSearch(f.name); setFoods([]); }}
+                {foods.map((f, idx) => (
+                  <button key={f.id || `off-${idx}`} className={styles.foodOption}
+                    onClick={() => selectFood(f)}
                   >
-                    <span>{f.name}</span>
+                    <span>{f.name}{f.source === 'openfoodfacts' ? ' 🌐' : ''}</span>
                     <span className={styles.foodCal}>{f.calories_per_100g} kcal/100g</span>
                   </button>
                 ))}
