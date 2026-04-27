@@ -4,13 +4,10 @@ const db = require('../config/db');
 const getDailyLog = async (req, res, next) => {
   try {
     const date = req.query.date || new Date().toISOString().slice(0, 10);
-
-    // Obtener items del día
     const [rows] = await db.query(
       `SELECT dl.id, dl.quantity, dl.meal_type, dl.logged_at,
               f.id as food_id, f.name, f.category,
-              f.calories_per_100g, f.protein_per_100g, 
-              f.carbs_per_100g, f.fat_per_100g, f.fiber_per_100g,
+              f.calories_per_100g, f.protein_per_100g, f.carbs_per_100g, f.fat_per_100g, f.fiber_per_100g,
               ROUND(f.calories_per_100g * dl.quantity / 100, 1) as calories,
               ROUND(f.protein_per_100g * dl.quantity / 100, 1) as protein,
               ROUND(f.carbs_per_100g * dl.quantity / 100, 1) as carbs,
@@ -23,52 +20,33 @@ const getDailyLog = async (req, res, next) => {
       [req.user.id, date]
     );
 
-    // Sumar totales en el backend
-    const totals = {
-      calories: 0,
-      protein: 0,
-      carbs: 0,
-      fat: 0,
-      fiber: 0
-    };
+    // Calcular totales (parseFloat necesario porque MySQL ROUND devuelve strings)
+    const totals = rows.reduce(
+      (acc, r) => ({
+        calories: +(acc.calories + parseFloat(r.calories || 0)).toFixed(1),
+        protein: +(acc.protein + parseFloat(r.protein || 0)).toFixed(1),
+        carbs: +(acc.carbs + parseFloat(r.carbs || 0)).toFixed(1),
+        fat: +(acc.fat + parseFloat(r.fat || 0)).toFixed(1),
+        fiber: +(acc.fiber + parseFloat(r.fiber || 0)).toFixed(1),
+      }),
+      { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
+    );
 
-    rows.forEach(row => {
-      totals.calories += parseFloat(row.calories) || 0;
-      totals.protein += parseFloat(row.protein) || 0;
-      totals.carbs += parseFloat(row.carbs) || 0;
-      totals.fat += parseFloat(row.fat) || 0;
-      totals.fiber += parseFloat(row.fiber) || 0;
-    });
+    // Convertir valores de MySQL (strings) a números
+    const items = rows.map(r => ({
+      ...r,
+      quantity: parseFloat(r.quantity || 0),
+      calories: parseFloat(r.calories || 0),
+      protein: parseFloat(r.protein || 0),
+      carbs: parseFloat(r.carbs || 0),
+      fat: parseFloat(r.fat || 0),
+      fiber: parseFloat(r.fiber || 0),
+    }));
 
-    // Redondear totales
-    totals.calories = Math.round(totals.calories * 10) / 10;
-    totals.protein = Math.round(totals.protein * 10) / 10;
-    totals.carbs = Math.round(totals.carbs * 10) / 10;
-    totals.fat = Math.round(totals.fat * 10) / 10;
-    totals.fiber = Math.round(totals.fiber * 10) / 10;
-
-    res.json({ date, items: rows, totals });
+    res.json({ date, items, totals });
   } catch (err) {
     next(err);
   }
-};
-
-// Calcular totales
-const totals = rows.reduce(
-  (acc, r) => ({
-    calories: +(acc.calories + r.calories).toFixed(1),
-    protein: +(acc.protein + r.protein).toFixed(1),
-    carbs: +(acc.carbs + r.carbs).toFixed(1),
-    fat: +(acc.fat + r.fat).toFixed(1),
-    fiber: +(acc.fiber + r.fiber).toFixed(1),
-  }),
-  { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-);
-
-res.json({ date, items: rows, totals });
-  } catch (err) {
-  next(err);
-}
 };
 
 // POST /api/daily-log
