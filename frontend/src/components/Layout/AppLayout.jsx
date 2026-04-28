@@ -8,11 +8,11 @@ import {
 import styles from './AppLayout.module.css';
 
 const NAV_ITEMS = [
-  { to: '/',        label: 'Inicio',   icon: Home },
-  { to: '/pantry',  label: 'Despensa', icon: Package },
-  { to: '/scanner', label: 'Escáner',  icon: ScanLine },
-  { to: '/menus',   label: 'Menús',    icon: CalendarDays },
-  { to: '/profile', label: 'Perfil',   icon: User },
+  { to: '/dashboard',         label: 'Inicio',   icon: Home },
+  { to: '/dashboard/pantry',  label: 'Despensa', icon: Package },
+  { to: '/dashboard/scanner', label: 'Escáner',  icon: ScanLine },
+  { to: '/dashboard/menus',   label: 'Menús',    icon: CalendarDays },
+  { to: '/dashboard/profile', label: 'Perfil',   icon: User },
 ];
 
 const RoleBadge = ({ role }) => {
@@ -46,7 +46,7 @@ export default function AppLayout() {
           <NavLink
             key={to}
             to={to}
-            end={to === '/'}
+            end={to === '/dashboard'}
             className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
             onClick={() => setOpen(false)}
           >

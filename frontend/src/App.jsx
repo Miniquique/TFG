@@ -9,6 +9,7 @@ import PantryPage from './components/Pantry/PantryPage';
 import ScannerPage from './components/Scanner/ScannerPage';
 import MenusPage from './components/Menus/MenusPage';
 import ProfilePage from './components/Profile/ProfilePage';
+import LandingPage from './components/Landing/LandingPage';
 import './styles/global.css';
 
 const PrivateRoute = ({ children }) => {
@@ -24,19 +25,25 @@ const PrivateRoute = ({ children }) => {
 const PublicRoute = ({ children }) => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  return user ? <Navigate to="/" replace /> : children;
+  return user ? <Navigate to="/dashboard" replace /> : children;
 };
 
 const AppRoutes = () => (
   <Routes>
+    {/* Public Routes */}
+    <Route path="/" element={<LandingPage />} />
     <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-    <Route path="/" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
+    
+    {/* Private Routes */}
+    <Route path="/dashboard" element={<PrivateRoute><AppLayout /></PrivateRoute>}>
       <Route index element={<Dashboard />} />
       <Route path="pantry" element={<PantryPage />} />
       <Route path="scanner" element={<ScannerPage />} />
       <Route path="menus" element={<MenusPage />} />
       <Route path="profile" element={<ProfilePage />} />
     </Route>
+    
+    {/* Fallback */}
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>
 );

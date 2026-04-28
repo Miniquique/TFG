@@ -41,6 +41,7 @@ smartfoodai/
     │   ├── styles/
     │   │   └── global.css      # Variables CSS + estilos base
     │   └── components/
+    │       ├── Landing/        # Landing Page pública
     │       ├── Auth/           # LoginPage (login + registro)
     │       ├── Layout/         # AppLayout + Sidebar
     │       ├── Dashboard/      # Contador calorías + macros
@@ -101,11 +102,13 @@ El administrador puede cambiar el rol de cualquier usuario desde **Perfil → Pa
 
 | Ruta | Descripción | Acceso |
 |------|------------|--------|
-| `/` | Dashboard: calorías diarias + macros | Todos |
-| `/pantry` | Gestión de despensa | Todos |
-| `/scanner` | Escáner de lista de la compra con IA | Todos |
-| `/menus` | Generador de menús semanales con IA | Premium / Admin |
-| `/profile` | Perfil personal + panel de admin | Todos (admin extra) |
+| `/` | Landing Page pública | Todos |
+| `/login` | Autenticación y registro | Todos |
+| `/dashboard` | Dashboard: calorías diarias + macros | Usuarios |
+| `/dashboard/pantry` | Gestión de despensa | Usuarios |
+| `/dashboard/scanner` | Escáner de lista de la compra con IA | Usuarios |
+| `/dashboard/menus` | Generador de menús semanales con IA | Premium / Admin |
+| `/dashboard/profile` | Perfil personal + panel de admin | Usuarios (admin extra) |
 
 ## 🤖 IA integrada
 
@@ -179,7 +182,7 @@ FRONTEND_URL (URL pública del frontend)
 | Gráficos | Recharts |
 | Backend | Node.js, Express 4 |
 | Base de datos | MySQL 8 |
-| IA | Anthropic Claude (claude-opus-4-5) |
+| IA | Google Gemini (Gemini 2.5 flash) |
 | Auth | JWT (jsonwebtoken) |
 | Seguridad | Helmet, express-rate-limit, bcrypt |
 | Infraestructura | Docker, Docker Compose, Nginx |

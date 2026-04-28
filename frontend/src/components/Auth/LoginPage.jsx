@@ -22,12 +22,12 @@ export default function LoginPage() {
       if (mode === 'login') {
         await login(form.email, form.password);
         toast.success('¡Bienvenido de vuelta!');
-        navigate('/');
+        navigate('/dashboard');
       } else {
         if (!form.name.trim()) { toast.error('El nombre es obligatorio'); return; }
         await register(form.name, form.email, form.password);
         toast.success('¡Cuenta creada con éxito!');
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Error al iniciar sesión');
