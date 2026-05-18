@@ -32,3 +32,5 @@ jobs:
           context: ./frontend
           push: true
           tags: ${{ secrets.AZURE_REGISTRY_LOGIN_SERVER }}/frontend:latest
+          build-args: |
+            REACT_APP_API_URL=${{ secrets.REACT_APP_API_URL }}
