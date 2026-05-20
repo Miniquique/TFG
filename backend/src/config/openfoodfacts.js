@@ -126,7 +126,6 @@ module.exports = {
   fetchOFF,
   searchProducts,
   login,
-  getSessionCookie,
   OFF_BASE_URL,
   USER_AGENT,
 };
